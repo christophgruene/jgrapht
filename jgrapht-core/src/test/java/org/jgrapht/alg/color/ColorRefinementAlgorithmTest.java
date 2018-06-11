@@ -23,13 +23,15 @@ public class ColorRefinementAlgorithmTest
         
         // Tree has the form ._._|_._.
         
-        Graphs.addAllVertices(tree, Arrays.asList(1, 2, 3, 4, 5, 6));
+        Graphs.addAllVertices(tree, Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8));
         
         tree.addEdge(1, 2);
         tree.addEdge(2, 3);
         tree.addEdge(3, 4);
         tree.addEdge(4, 5);
         tree.addEdge(3, 6);
+        tree.addEdge(6, 7);
+        tree.addEdge(6, 8);
         
         ColorRefinementAlgorithm<Integer, DefaultEdge> CR = new ColorRefinementAlgorithm<>(tree);
         Map<Integer, Integer> colors = CR.getColoring().getColors();
@@ -37,7 +39,9 @@ public class ColorRefinementAlgorithmTest
         // symmetric pairs around 3 should have the same color and different colors otherwise
         
         assertEquals(colors.get(1).intValue(), colors.get(5).intValue());
+        assertNotEquals(colors.get(1).intValue(), colors.get(7).intValue());
         assertEquals(colors.get(2).intValue(), colors.get(4).intValue());
+        assertEquals(colors.get(7).intValue(), colors.get(8).intValue());
         assertNotEquals(colors.get(1).intValue(), colors.get(2).intValue());
         assertNotEquals(colors.get(2).intValue(), colors.get(3).intValue());
         assertNotEquals(colors.get(3).intValue(), colors.get(6).intValue());
@@ -110,13 +114,12 @@ public class ColorRefinementAlgorithmTest
         // 9 and 10 should have the same color, all others should have distinct colors
         
         for(int i = 1; i < 11; i++) {
-            if(i != 9 && i != 10) {
-                for(int j = i + 1; j <= 11; j++) {
+            for(int j = i + 1; j <= 11; j++) {
+                if(i != 9 || j != 10) {
                     assertNotEquals(colors.get(i).intValue(), colors.get(j).intValue());
                 }
-            }      
+            }
         }
-        
         assertEquals(colors.get(9).intValue(), colors.get(10).intValue());
     }
 
