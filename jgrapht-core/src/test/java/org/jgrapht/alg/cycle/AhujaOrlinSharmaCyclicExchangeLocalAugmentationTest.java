@@ -1,10 +1,9 @@
 package org.jgrapht.alg.cycle;
 
 import org.jgrapht.Graph;
-import org.jgrapht.graph.ClassBasedEdgeFactory;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.graph.DefaultUndirectedGraph;
+import org.jgrapht.util.SupplierUtil;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -12,6 +11,7 @@ import java.util.LinkedList;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 /**
  * Unit tests for {@link AhujaOrlinSharmaCyclicExchangeLocalAugmentation}.
@@ -65,7 +65,7 @@ public class AhujaOrlinSharmaCyclicExchangeLocalAugmentationTest {
             labels.put(i, 1);
             labels.put(i + 5, 2);
             labels.put(i + 10, 3);
-            labels.put(i +  15, 4);
+            labels.put(i + 15, 4);
             labels.put(i + 20, 5);
         }
 
@@ -101,7 +101,7 @@ public class AhujaOrlinSharmaCyclicExchangeLocalAugmentationTest {
             labels.put(i, 1);
             labels.put(i + 5, 2);
             labels.put(i + 10, 3);
-            labels.put(i +  15, 4);
+            labels.put(i + 15, 4);
             labels.put(i + 20, 5);
         }
 
@@ -121,8 +121,55 @@ public class AhujaOrlinSharmaCyclicExchangeLocalAugmentationTest {
 
     }
 
+    @Test
+    public void testImprovementGraph4() {
+        LinkedList<Integer> cycle = new LinkedList<>();
+        cycle.add(3);
+        cycle.add(4);
+        cycle.add(5);
+        cycle.add(0);
+        cycle.add(1);
+        cycle.add(2);
+        cycle.add(3);
+
+        Map<Integer, Integer> labels = new HashMap<>();
+        labels.put(0, 0);
+        labels.put(1, 1);
+        labels.put(2, 2);
+        labels.put(3, 3);
+        labels.put(4, 4);
+        labels.put(5, 5);
+
+        Graph<Integer, DefaultEdge> graph = new DefaultDirectedGraph<>(null, SupplierUtil.createDefaultEdgeSupplier(), true);
+        for(int i = 0; i < 6; ++i) {
+            graph.addVertex(i);
+        }
+        for(int i = 0; i < 6; ++i) {
+            graph.setEdgeWeight(graph.addEdge(i, (i + 1) % 6), 1);
+
+        }
+        graph.setEdgeWeight(graph.addEdge(1, 4), 1);
+
+        graph.setEdgeWeight(graph.getEdge(1, 4), -3);
+        graph.setEdgeWeight(graph.getEdge(3, 4), -6);
+
+        int lengthBound1 = 4;
+
+        LabeledPath<Integer> calculatedCycle1 = new AhujaOrlinSharmaCyclicExchangeLocalAugmentation<>(graph, lengthBound1, labels).getLocalAugmentationCycle();
+
+        assertNull(calculatedCycle1);
+
+        int lengthBound2 = 6;
+
+        LabeledPath<Integer> calculatedCycle2 = new AhujaOrlinSharmaCyclicExchangeLocalAugmentation<>(graph, lengthBound2, labels).getLocalAugmentationCycle();
+
+        assertEquals(cycle, calculatedCycle2.getVertices());
+        assertEquals(-1, calculatedCycle2.getCost(), 0.0000001);
+    }
+
+
     private Graph<Integer, DefaultEdge> generateImprovementGraphForPartitionProblem(Map<Integer, Integer> labels, double initialWeight) {
-        Graph<Integer, DefaultEdge> graph = new DefaultDirectedGraph<>(new ClassBasedEdgeFactory<>(DefaultEdge.class), true);
+        Graph<Integer, DefaultEdge> graph = new DefaultDirectedGraph<>(null, SupplierUtil.createDefaultEdgeSupplier(), true);
 
         for(Integer v1 : labels.keySet()) {
             graph.addVertex(v1);
