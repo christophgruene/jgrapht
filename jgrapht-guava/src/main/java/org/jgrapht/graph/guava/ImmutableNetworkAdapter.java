@@ -17,21 +17,13 @@
  */
 package org.jgrapht.graph.guava;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
-
-import org.jgrapht.EdgeFactory;
-import org.jgrapht.Graph;
-import org.jgrapht.GraphType;
-import org.jgrapht.graph.ClassBasedEdgeFactory;
-import org.jgrapht.util.TypeUtil;
-
 import com.google.common.graph.Graphs;
-import com.google.common.graph.ImmutableNetwork;
-import com.google.common.graph.MutableNetwork;
-import com.google.common.graph.NetworkBuilder;
+import com.google.common.graph.*;
+import org.jgrapht.Graph;
+import org.jgrapht.*;
+import org.jgrapht.util.*;
+
+import java.io.*;
 
 /**
  * A graph adapter class using Guava's {@link ImmutableNetwork}.
@@ -39,18 +31,19 @@ import com.google.common.graph.NetworkBuilder;
  * <p>
  * Since the underlying network is immutable, the resulting graph is unmodifiable.
  * 
- * <p>Example usage: <blockquote>
+ * <p>
+ * Example usage: <blockquote>
  * 
  * <pre>
  * MutableNetwork&lt;String, DefaultEdge&gt; mutableNetwork =
  *     NetworkBuilder.directed().allowsParallelEdges(true).allowsSelfLoops(true).build();
- *     
+ * 
  * mutableNetwork.addNode("v1");
  * 
- * ImmutableNetworkGraph&lt;String, DefaultEdge&gt; immutableNetwork = ImmutableNetwork.copyOf(mutableNetwork);
+ * ImmutableNetworkGraph&lt;String, DefaultEdge&gt; immutableNetwork =
+ *     ImmutableNetwork.copyOf(mutableNetwork);
  * 
- * Graph&lt;String, DefaultEdge&gt; graph =
- *     new ImmutableNetworkAdapter&lt;&gt;(immutableNetwork, DefaultEdge.class);
+ * Graph&lt;String, DefaultEdge&gt; graph = new ImmutableNetworkAdapter&lt;&gt;(immutableNetwork);
  * </pre>
  * 
  * </blockquote>
@@ -61,8 +54,12 @@ import com.google.common.graph.NetworkBuilder;
  * @param <E> the graph edge type
  */
 public class ImmutableNetworkAdapter<V, E>
-    extends BaseNetworkAdapter<V, E, ImmutableNetwork<V, E>>
-    implements Graph<V, E>, Cloneable, Serializable
+    extends
+    BaseNetworkAdapter<V, E, ImmutableNetwork<V, E>>
+    implements
+    Graph<V, E>,
+    Cloneable,
+    Serializable
 {
     private static final long serialVersionUID = 8776276294297681092L;
 
@@ -72,22 +69,10 @@ public class ImmutableNetworkAdapter<V, E>
      * Create a new network adapter.
      * 
      * @param network the immutable network
-     * @param ef the edge factory of the new graph
      */
-    public ImmutableNetworkAdapter(ImmutableNetwork<V, E> network, EdgeFactory<V, E> ef)
+    public ImmutableNetworkAdapter(ImmutableNetwork<V, E> network)
     {
-        super(network, ef);
-    }
-
-    /**
-     * Create a new network adapter.
-     * 
-     * @param network the immutable network
-     * @param edgeClass class on which to base factory for edges
-     */
-    public ImmutableNetworkAdapter(ImmutableNetwork<V, E> network, Class<? extends E> edgeClass)
-    {
-        this(network, new ClassBasedEdgeFactory<>(edgeClass));
+        super(network);
     }
 
     @Override
@@ -98,6 +83,12 @@ public class ImmutableNetworkAdapter<V, E>
 
     @Override
     public boolean addEdge(V sourceVertex, V targetVertex, E e)
+    {
+        throw new UnsupportedOperationException(GRAPH_IS_IMMUTABLE);
+    }
+
+    @Override
+    public V addVertex()
     {
         throw new UnsupportedOperationException(GRAPH_IS_IMMUTABLE);
     }
@@ -159,7 +150,8 @@ public class ImmutableNetworkAdapter<V, E>
         try {
             ImmutableNetworkAdapter<V, E> newGraph = TypeUtil.uncheckedCast(super.clone());
 
-            newGraph.edgeFactory = this.edgeFactory;
+            newGraph.vertexSupplier = this.vertexSupplier;
+            newGraph.edgeSupplier = this.edgeSupplier;
             newGraph.unmodifiableVertexSet = null;
             newGraph.unmodifiableEdgeSet = null;
             newGraph.network = ImmutableNetwork.copyOf(Graphs.copyOf(this.network));
@@ -198,7 +190,8 @@ public class ImmutableNetworkAdapter<V, E>
 
     @SuppressWarnings("unchecked")
     private void readObject(ObjectInputStream ois)
-        throws ClassNotFoundException, IOException
+        throws ClassNotFoundException,
+        IOException
     {
         ois.defaultReadObject();
 

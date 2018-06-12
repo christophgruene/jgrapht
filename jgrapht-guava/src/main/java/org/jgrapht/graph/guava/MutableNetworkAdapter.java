@@ -17,20 +17,14 @@
  */
 package org.jgrapht.graph.guava;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
-
-import org.jgrapht.EdgeFactory;
-import org.jgrapht.Graph;
-import org.jgrapht.GraphType;
-import org.jgrapht.graph.ClassBasedEdgeFactory;
-import org.jgrapht.util.TypeUtil;
-
 import com.google.common.graph.Graphs;
-import com.google.common.graph.MutableNetwork;
-import com.google.common.graph.NetworkBuilder;
+import com.google.common.graph.*;
+import org.jgrapht.Graph;
+import org.jgrapht.*;
+import org.jgrapht.util.*;
+
+import java.io.*;
+import java.util.function.*;
 
 /**
  * A graph adapter class using Guava's {@link MutableNetwork}.
@@ -45,12 +39,12 @@ import com.google.common.graph.NetworkBuilder;
  * MutableNetwork&lt;String, DefaultEdge&gt; mutableNetwork =
  *     NetworkBuilder.directed().allowsParallelEdges(true).allowsSelfLoops(true).build();
  * 
- * Graph&lt;String, DefaultEdge&gt; graph =
- *     new MutableNetworkAdapter&lt;&gt;(mutableNetwork, DefaultEdge.class);
+ * Graph&lt;String, DefaultEdge&gt; graph = new MutableNetworkAdapter&lt;&gt;(
+ *     mutableNetwork, SupplierUtil.createStringSupplier(), SupplierUtil.DEFAULT_EDGE_SUPPLIER);
  * 
  * graph.addVertex("v1");
  * 
- * System.out.println(mutableNetwork.nodes().contains("v1"));  // outputs true
+ * System.out.println(mutableNetwork.nodes().contains("v1")); // outputs true
  * </pre>
  * 
  * </blockquote>
@@ -61,8 +55,12 @@ import com.google.common.graph.NetworkBuilder;
  * @param <E> the graph edge type
  */
 public class MutableNetworkAdapter<V, E>
-    extends BaseNetworkAdapter<V, E, MutableNetwork<V, E>>
-    implements Graph<V, E>, Cloneable, Serializable
+    extends
+    BaseNetworkAdapter<V, E, MutableNetwork<V, E>>
+    implements
+    Graph<V, E>,
+    Cloneable,
+    Serializable
 {
     private static final long serialVersionUID = 7450826703235510224L;
 
@@ -72,22 +70,23 @@ public class MutableNetworkAdapter<V, E>
      * Create a new network adapter.
      * 
      * @param network the mutable network
-     * @param ef the edge factory of the new graph
      */
-    public MutableNetworkAdapter(MutableNetwork<V, E> network, EdgeFactory<V, E> ef)
+    public MutableNetworkAdapter(MutableNetwork<V, E> network)
     {
-        super(network, ef);
+        this(network, null, null);
     }
 
     /**
      * Create a new network adapter.
      * 
      * @param network the mutable network
-     * @param edgeClass class on which to base factory for edges
+     * @param vertexSupplier the vertex supplier
+     * @param edgeSupplier the edge supplier
      */
-    public MutableNetworkAdapter(MutableNetwork<V, E> network, Class<? extends E> edgeClass)
+    public MutableNetworkAdapter(
+        MutableNetwork<V, E> network, Supplier<V> vertexSupplier, Supplier<E> edgeSupplier)
     {
-        this(network, new ClassBasedEdgeFactory<>(edgeClass));
+        super(network, vertexSupplier, edgeSupplier);
     }
 
     @Override
@@ -104,7 +103,11 @@ public class MutableNetworkAdapter<V, E>
             throw new IllegalArgumentException(LOOPS_NOT_ALLOWED);
         }
 
-        E e = edgeFactory.createEdge(sourceVertex, targetVertex);
+        if (edgeSupplier == null) {
+            throw new UnsupportedOperationException("The graph contains no edge supplier");
+        }
+
+        E e = edgeSupplier.get();
 
         if (network.addEdge(sourceVertex, targetVertex, e)) {
             return e;
@@ -135,6 +138,21 @@ public class MutableNetworkAdapter<V, E>
         }
 
         return false;
+    }
+
+    @Override
+    public V addVertex()
+    {
+        if (vertexSupplier == null) {
+            throw new UnsupportedOperationException("The graph contains no vertex supplier");
+        }
+
+        V v = vertexSupplier.get();
+
+        if (network.addNode(v)) {
+            return v;
+        }
+        return null;
     }
 
     @Override
@@ -188,7 +206,8 @@ public class MutableNetworkAdapter<V, E>
         try {
             MutableNetworkAdapter<V, E> newGraph = TypeUtil.uncheckedCast(super.clone());
 
-            newGraph.edgeFactory = this.edgeFactory;
+            newGraph.vertexSupplier = this.vertexSupplier;
+            newGraph.edgeSupplier = this.edgeSupplier;
             newGraph.unmodifiableVertexSet = null;
             newGraph.unmodifiableEdgeSet = null;
             newGraph.network = Graphs.copyOf(this.network);
@@ -227,7 +246,8 @@ public class MutableNetworkAdapter<V, E>
 
     @SuppressWarnings("unchecked")
     private void readObject(ObjectInputStream ois)
-        throws ClassNotFoundException, IOException
+        throws ClassNotFoundException,
+        IOException
     {
         ois.defaultReadObject();
 

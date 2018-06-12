@@ -17,19 +17,14 @@
  */
 package org.jgrapht.graph.guava;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
-
-import org.jgrapht.Graph;
-import org.jgrapht.GraphType;
-import org.jgrapht.util.TypeUtil;
-
-import com.google.common.graph.EndpointPair;
-import com.google.common.graph.GraphBuilder;
+import com.google.common.graph.*;
 import com.google.common.graph.Graphs;
-import com.google.common.graph.MutableGraph;
+import org.jgrapht.Graph;
+import org.jgrapht.*;
+import org.jgrapht.util.*;
+
+import java.io.*;
+import java.util.function.*;
 
 /**
  * A graph adapter class using Guava's {@link MutableGraph}.
@@ -42,8 +37,7 @@ import com.google.common.graph.MutableGraph;
  * See the example below on how to create such an adapter: <blockquote>
  * 
  * <pre>
- * MutableGraph&lt;String&gt; mutableGraph =
- *     GraphBuilder.directed().allowsSelfLoops(true).build();
+ * MutableGraph&lt;String&gt; mutableGraph = GraphBuilder.directed().allowsSelfLoops(true).build();
  * 
  * mutableGraph.addNode("v1");
  * mutableGraph.addNode("v2");
@@ -59,8 +53,12 @@ import com.google.common.graph.MutableGraph;
  * @param <V> the graph vertex type
  */
 public class MutableGraphAdapter<V>
-    extends BaseGraphAdapter<V, MutableGraph<V>>
-    implements Graph<V, EndpointPair<V>>, Cloneable, Serializable
+    extends
+    BaseGraphAdapter<V, MutableGraph<V>>
+    implements
+    Graph<V, EndpointPair<V>>,
+    Cloneable,
+    Serializable
 {
     private static final long serialVersionUID = -7556855931445010748L;
 
@@ -71,7 +69,20 @@ public class MutableGraphAdapter<V>
      */
     public MutableGraphAdapter(MutableGraph<V> graph)
     {
-        super(graph);
+        this(graph, null, null);
+    }
+
+    /**
+     * Create a new adapter.
+     * 
+     * @param graph the graph
+     * @param vertexSupplier the vertex supplier
+     * @param edgeSupplier the edge supplier
+     */
+    public MutableGraphAdapter(
+        MutableGraph<V> graph, Supplier<V> vertexSupplier, Supplier<EndpointPair<V>> edgeSupplier)
+    {
+        super(graph, vertexSupplier, edgeSupplier);
     }
 
     @Override
@@ -130,6 +141,21 @@ public class MutableGraphAdapter<V>
 
         graph.putEdge(sourceVertex, targetVertex);
         return true;
+    }
+
+    @Override
+    public V addVertex()
+    {
+        if (vertexSupplier == null) {
+            throw new UnsupportedOperationException("The graph contains no vertex supplier");
+        }
+
+        V v = vertexSupplier.get();
+
+        if (graph.addNode(v)) {
+            return v;
+        }
+        return null;
     }
 
     @Override
@@ -225,7 +251,8 @@ public class MutableGraphAdapter<V>
 
     @SuppressWarnings("unchecked")
     private void readObject(ObjectInputStream ois)
-        throws ClassNotFoundException, IOException
+        throws ClassNotFoundException,
+        IOException
     {
         ois.defaultReadObject();
 

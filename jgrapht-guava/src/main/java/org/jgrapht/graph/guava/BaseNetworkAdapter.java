@@ -17,18 +17,15 @@
  */
 package org.jgrapht.graph.guava;
 
-import java.io.Serializable;
-import java.util.Collections;
-import java.util.Objects;
-import java.util.Set;
-
-import org.jgrapht.EdgeFactory;
+import com.google.common.graph.*;
+import org.jgrapht.*;
 import org.jgrapht.Graph;
-import org.jgrapht.GraphType;
 import org.jgrapht.graph.AbstractGraph;
-import org.jgrapht.graph.DefaultGraphType;
+import org.jgrapht.graph.*;
 
-import com.google.common.graph.Network;
+import java.io.*;
+import java.util.*;
+import java.util.function.*;
 
 /**
  * A base abstract implementation for the graph adapter class using Guava's {@link Network}. This is
@@ -41,8 +38,12 @@ import com.google.common.graph.Network;
  * @param <N> type of the underlying Guava's network
  */
 public abstract class BaseNetworkAdapter<V, E, N extends Network<V, E>>
-    extends AbstractGraph<V, E>
-    implements Graph<V, E>, Cloneable, Serializable
+    extends
+    AbstractGraph<V, E>
+    implements
+    Graph<V, E>,
+    Cloneable,
+    Serializable
 {
     private static final long serialVersionUID = -6233085794632237761L;
 
@@ -51,19 +52,88 @@ public abstract class BaseNetworkAdapter<V, E, N extends Network<V, E>>
     protected transient Set<V> unmodifiableVertexSet = null;
     protected transient Set<E> unmodifiableEdgeSet = null;
 
-    protected EdgeFactory<V, E> edgeFactory;
+    protected Supplier<V> vertexSupplier;
+    protected Supplier<E> edgeSupplier;
     protected transient N network;
 
     /**
      * Create a new network adapter.
      * 
      * @param network the mutable network
-     * @param ef the edge factory of the new graph
      */
-    public BaseNetworkAdapter(N network, EdgeFactory<V, E> ef)
+    public BaseNetworkAdapter(N network)
     {
-        this.edgeFactory = Objects.requireNonNull(ef);
+        this(network, null, null);
+    }
+
+    /**
+     * Create a new network adapter.
+     * 
+     * @param network the mutable network
+     * @param vertexSupplier the vertex supplier
+     * @param edgeSupplier the edge supplier
+     */
+    public BaseNetworkAdapter(N network, Supplier<V> vertexSupplier, Supplier<E> edgeSupplier)
+    {
+        this.vertexSupplier = vertexSupplier;
+        this.edgeSupplier = edgeSupplier;
         this.network = Objects.requireNonNull(network);
+    }
+
+    @Override
+    public Supplier<V> getVertexSupplier()
+    {
+        return vertexSupplier;
+    }
+
+    /**
+     * Set the vertex supplier that the graph uses whenever it needs to create new vertices.
+     * 
+     * <p>
+     * A graph uses the vertex supplier to create new vertex objects whenever a user calls method
+     * {@link Graph#addVertex()}. Users can also create the vertex in user code and then use method
+     * {@link Graph#addVertex(Object)} to add the vertex.
+     * 
+     * <p>
+     * In contrast with the {@link Supplier} interface, the vertex supplier has the additional
+     * requirement that a new and distinct result is returned every time it is invoked. More
+     * specifically for a new vertex to be added in a graph <code>v</code> must <i>not</i> be equal
+     * to any other vertex in the graph. More formally, the graph must not contain any vertex
+     * <code>v2</code> such that <code>v2.equals(v)</code>.
+     * 
+     * @param vertexSupplier the vertex supplier
+     */
+    public void setVertexSupplier(Supplier<V> vertexSupplier)
+    {
+        this.vertexSupplier = vertexSupplier;
+    }
+
+    @Override
+    public Supplier<E> getEdgeSupplier()
+    {
+        return edgeSupplier;
+    }
+
+    /**
+     * Set the edge supplier that the graph uses whenever it needs to create new edges.
+     * 
+     * <p>
+     * A graph uses the edge supplier to create new edge objects whenever a user calls method
+     * {@link Graph#addEdge(Object, Object)}. Users can also create the edge in user code and then
+     * use method {@link Graph#addEdge(Object, Object, Object)} to add the edge.
+     * 
+     * <p>
+     * In contrast with the {@link Supplier} interface, the edge supplier has the additional
+     * requirement that a new and distinct result is returned every time it is invoked. More
+     * specifically for a new edge to be added in a graph <code>e</code> must <i>not</i> be equal to
+     * any other edge in the graph (even if the graph allows edge-multiplicity). More formally, the
+     * graph must not contain any edge <code>e2</code> such that <code>e2.equals(e)</code>.
+     * 
+     * @param edgeSupplier the edge supplier
+     */
+    public void setEdgeSupplier(Supplier<E> edgeSupplier)
+    {
+        this.edgeSupplier = edgeSupplier;
     }
 
     @Override
@@ -71,12 +141,6 @@ public abstract class BaseNetworkAdapter<V, E, N extends Network<V, E>>
     {
         return network
             .edgesConnecting(sourceVertex, targetVertex).stream().findFirst().orElse(null);
-    }
-
-    @Override
-    public EdgeFactory<V, E> getEdgeFactory()
-    {
-        return edgeFactory;
     }
 
     @Override
@@ -169,11 +233,11 @@ public abstract class BaseNetworkAdapter<V, E, N extends Network<V, E>>
     @Override
     public double getEdgeWeight(E e)
     {
-        if (e == null) { 
+        if (e == null) {
             throw new NullPointerException();
-        } else if (!network.edges().contains(e)) { 
+        } else if (!network.edges().contains(e)) {
             throw new IllegalArgumentException("no such edge in graph: " + e.toString());
-        } else { 
+        } else {
             return Graph.DEFAULT_EDGE_WEIGHT;
         }
     }
