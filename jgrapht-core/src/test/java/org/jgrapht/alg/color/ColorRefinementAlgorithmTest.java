@@ -2,8 +2,10 @@ package org.jgrapht.alg.color;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.jgrapht.*;
 import org.jgrapht.graph.*;
@@ -13,6 +15,7 @@ import org.junit.*;
  * Tests for the Color-refinement algorithm.
  * 
  * @author Oliver Feith
+ * @author Abdallah Atouani
  */
 public class ColorRefinementAlgorithmTest 
 {
@@ -112,7 +115,7 @@ public class ColorRefinementAlgorithmTest
         Map<Integer, Integer> colors = CR.getColoring().getColors();
         
         // 9 and 10 should have the same color, all others should have distinct colors
-        
+
         for(int i = 1; i < 11; i++) {
             for(int j = i + 1; j <= 11; j++) {
                 if(i != 9 || j != 10) {
@@ -121,6 +124,36 @@ public class ColorRefinementAlgorithmTest
             }
         }
         assertEquals(colors.get(9).intValue(), colors.get(10).intValue());
+    }
+
+    @Test
+    public void testTreeMaximalOneChild() {
+        Graph<Integer, DefaultEdge> graph = new DefaultUndirectedGraph<>(DefaultEdge.class);
+
+        Graphs.addAllVertices(graph, Arrays.asList(1, 2, 3, 4, 5));
+        graph.addEdge(1, 2);
+        graph.addEdge(2, 3);
+        graph.addEdge(3, 4);
+        graph.addEdge(4, 5);
+
+        ColorRefinementAlgorithm<Integer, DefaultEdge> colorRefinementAlgorithm = new ColorRefinementAlgorithm<>(graph);
+        int numberOfColors = colorRefinementAlgorithm.getColoring().getNumberColors();
+        Map<Integer, Integer> colors = colorRefinementAlgorithm.getColoring().getColors();
+
+        Map<Integer, Integer> firstGroup = colors.entrySet().stream()
+                .filter(x -> x.getValue().equals(colors.get(1).intValue()))
+                .collect(Collectors.toMap(x -> x.getKey(), x -> x.getValue()));
+
+        Map<Integer, Integer> secondGroup = colors.entrySet().stream()
+                .filter(x -> x.getValue().equals(colors.get(2).intValue()))
+                .collect(Collectors.toMap(x -> x.getKey(), x -> x.getValue()));
+
+        assertEquals(2, firstGroup.size());
+        assertTrue(firstGroup.keySet().containsAll(Arrays.asList(1, 5)));
+        assertEquals(2, secondGroup.size());
+        assertTrue(secondGroup.keySet().containsAll(Arrays.asList(2, 4)));
+
+        assertEquals(3, numberOfColors);
     }
 
 }
