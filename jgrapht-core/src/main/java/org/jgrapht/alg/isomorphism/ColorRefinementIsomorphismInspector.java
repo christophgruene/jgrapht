@@ -20,6 +20,7 @@ package org.jgrapht.alg.isomorphism;
 import org.jgrapht.*;
 import org.jgrapht.alg.color.ColorRefinementAlgorithm;
 import org.jgrapht.alg.interfaces.VertexColoringAlgorithm.Coloring;
+import org.jgrapht.graph.AsGraphUnion;
 
 import java.util.*;
 
