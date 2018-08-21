@@ -175,20 +175,22 @@ public class ColorRefinementAlgorithm<V, E> implements VertexColoringAlgorithm<V
              * go through all vertices in the in-neighborhood and increase color degree of the current vertex
              */
             for(V w : inNeighborhood) { // go through all vertices in the in-neighborhood
-                colorDegree.put(w, colorDegree.get(w) + 1); // increase color degree of the current vertex
+                int colorDegreeW = colorDegree.get(w) + 1;
+                colorDegree.put(w, colorDegreeW); // increase color degree of the current vertex
                 /*
                  * add vertex to A if color degree of exactly 1 is reached
                  * add vertex to adjacentColors only if it is not already contained in adjacentColors
                  * update maxColorDegree for color(w) if maximum color degree has increased
                  */
-                if(colorDegree.get(w) == 1) {
-                    A.get(color.get(w)).add(w);
+                Integer colorW = color.get(w);
+                if(colorDegreeW == 1) {
+                    A.get(colorW).add(w);
                 }
-                if(!adjacentColors.contains(color.get(w))) {
-                    adjacentColors.add(color.get(w));
+                if(!adjacentColors.contains(colorW)) {
+                    adjacentColors.add(colorW);
                 }
-                if(colorDegree.get(w) > maxColorDegree[color.get(w)]) {
-                    maxColorDegree[color.get(w)] = colorDegree.get(w);
+                if(colorDegreeW > maxColorDegree[colorW]) {
+                    maxColorDegree[colorW] = colorDegreeW;
                 }
             }
         }

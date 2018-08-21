@@ -23,8 +23,8 @@ public class Main {
 
     private static void RunBenchmarkVF2() {
         double e = 200;
-        for (int i = 1; i < 21; i += 1) {
-            VF2BenchmarkResult result = RunVF2BenchmarkWithEdgeProbability(i * 200, 0.1);
+        for (int i = 1; i < 210; i += 1) {
+            VF2BenchmarkResult result = RunVF2BenchmarkWithEdgeProbability(i * 100, 0.1);
             System.out.println(result.getProblemSize() + "\t" + result.getColorRefinementMilliseconds() + "\t" + result.getVf2Milliseconds());
         }
     }
@@ -120,8 +120,8 @@ public class Main {
 
         generator.generateGraph(graph1);
         generator.generateGraph(graph2);
-        ColorRefinementIsomorphismInspector<Integer, DefaultEdge> colorRefinementIsomorphismInspector = new ColorRefinementIsomorphismInspector<>(graph1, graph2);
-        VF2GraphIsomorphismInspector<Integer, DefaultEdge> vf2IsomorphismInspector = new VF2GraphIsomorphismInspector<>(graph1, graph2);
+        ColorRefinementIsomorphismInspector<Integer, DefaultEdge> colorRefinementIsomorphismInspector = new ColorRefinementIsomorphismInspector<>(graph1, graph1);
+        VF2GraphIsomorphismInspector<Integer, DefaultEdge> vf2IsomorphismInspector = new VF2GraphIsomorphismInspector<>(graph1, graph1);
         System.gc();
         StopWatch watch = new StopWatch();
         watch.start();
@@ -135,7 +135,7 @@ public class Main {
         long vf2Time = watch.getTime();
 
         if (resultColorRefinement != resultVf2) {
-            // throw new RuntimeException("Tests were different");
+            throw new RuntimeException("Tests were different");
         }
 
         return new VF2BenchmarkResult((int)colorRefinementTime, (int)vf2Time, size);
