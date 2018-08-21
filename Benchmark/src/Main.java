@@ -11,20 +11,21 @@ import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleGraph;
 import org.jgrapht.util.SupplierUtil;
 
-import java.util.Set;
+import java.util.*;
 
 public class Main {
     static int seed = 0;
     public static void main (String[] args) {
         // RunBenchmarkWithLinearNumberOfEdges();
         // RunRandomTestWithLinearNumberOfEdges();
-        RunBenchmarkVF2();
+         RunBenchmarkVF2();
+        // RunBenchmarkWithEdgeProbability();
     }
 
     private static void RunBenchmarkVF2() {
         double e = 200;
-        for (int i = 1; i < 210; i += 1) {
-            VF2BenchmarkResult result = RunVF2BenchmarkWithEdgeProbability(i * 100, 0.1);
+        for (int i = 200; i <= 10400; i += 200) {
+            VF2BenchmarkResult result = RunVF2BenchmarkWithEdgeProbability(i, 0.1);
             System.out.println(result.getProblemSize() + "\t" + result.getColorRefinementMilliseconds() + "\t" + result.getVf2Milliseconds());
         }
     }
@@ -115,19 +116,19 @@ public class Main {
     private static VF2BenchmarkResult RunVF2Benchmark(GraphGenerator<Integer, DefaultEdge, Integer> generator, int size) {
         Graph<Integer, DefaultEdge> graph1 = new SimpleGraph<>(
                 SupplierUtil.createIntegerSupplier(), SupplierUtil.DEFAULT_EDGE_SUPPLIER, false);
-        Graph<Integer, DefaultEdge> graph2 = new SimpleGraph<>(
-                SupplierUtil.createIntegerSupplier(), SupplierUtil.DEFAULT_EDGE_SUPPLIER, false);
 
         generator.generateGraph(graph1);
-        generator.generateGraph(graph2);
-        ColorRefinementIsomorphismInspector<Integer, DefaultEdge> colorRefinementIsomorphismInspector = new ColorRefinementIsomorphismInspector<>(graph1, graph1);
-        VF2GraphIsomorphismInspector<Integer, DefaultEdge> vf2IsomorphismInspector = new VF2GraphIsomorphismInspector<>(graph1, graph1);
+        Graph<Integer, DefaultEdge> graph2 = getRandomPermutation(graph1, seed++);
+
+        ColorRefinementIsomorphismInspector<Integer, DefaultEdge> colorRefinementIsomorphismInspector = new ColorRefinementIsomorphismInspector<>(graph1, graph2);
+        VF2GraphIsomorphismInspector<Integer, DefaultEdge> vf2IsomorphismInspector = new VF2GraphIsomorphismInspector<>(graph1, graph2);
         System.gc();
         StopWatch watch = new StopWatch();
         watch.start();
         boolean resultColorRefinement = colorRefinementIsomorphismInspector.isomorphismExists();
         watch.stop();
         long colorRefinementTime = watch.getTime();
+        System.gc();
         watch = new StopWatch();
         watch.start();
         boolean resultVf2 = vf2IsomorphismInspector.isomorphismExists();
@@ -135,10 +136,44 @@ public class Main {
         long vf2Time = watch.getTime();
 
         if (resultColorRefinement != resultVf2) {
-            throw new RuntimeException("Tests were different");
+            // throw new RuntimeException("Tests were different, CR=" + resultColorRefinement);
         }
 
         return new VF2BenchmarkResult((int)colorRefinementTime, (int)vf2Time, size);
+    }
+
+    private static Graph<Integer, DefaultEdge> getRandomPermutation(Graph<Integer, DefaultEdge> graph, int seed) {
+        Random random = new Random(seed);
+
+        ArrayList<Integer> remaining = new ArrayList<>(graph.vertexSet().size());
+
+        for (int i = 0; i < graph.vertexSet().size(); i++) {
+            remaining.add(i);
+        }
+
+        Map<Integer, Integer> hashSet = new HashMap<>();
+
+        for (int i = 0; i < graph.vertexSet().size(); i++) {
+            Integer value = remaining.get(random.nextInt(remaining.size()));
+            hashSet.put(i, value);
+            remaining.remove(value);
+        }
+        Graph<Integer, DefaultEdge> resultGraph = new SimpleGraph<>(
+                SupplierUtil.createIntegerSupplier(), SupplierUtil.DEFAULT_EDGE_SUPPLIER, false);
+
+        for (int i = 0; i < graph.vertexSet().size(); i++) {
+            resultGraph.addVertex(i);
+        }
+        for (int i = 0; i < graph.vertexSet().size(); i++) {
+
+            for (int j = i + 1; j < graph.vertexSet().size(); j++) {
+                if (graph.containsEdge(i, j)) {
+                    resultGraph.addEdge(hashSet.get(i), hashSet.get(j));
+                }
+            }
+        }
+
+        return resultGraph;
     }
 
     private static int GetNumberOfNonSimplicialClasses(VertexColoringAlgorithm.Coloring<Integer> coloring) {

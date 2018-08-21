@@ -165,16 +165,8 @@ public class ColorRefinementAlgorithm<V, E> implements VertexColoringAlgorithm<V
         for(V v : C.get(r)) {
             Set<E> incomingEdges = graph.incomingEdgesOf(v); // get all incident edges to get all adjacent vertices
             
-            Set<V> inNeighborhood = new HashSet<>();
-            
             for(E e: incomingEdges) {
-                inNeighborhood.add(Graphs.getOppositeVertex(graph, e, v));
-            }
-
-            /*
-             * go through all vertices in the in-neighborhood and increase color degree of the current vertex
-             */
-            for(V w : inNeighborhood) { // go through all vertices in the in-neighborhood
+                V w = Graphs.getOppositeVertex(graph, e, v);
                 int colorDegreeW = colorDegree.get(w) + 1;
                 colorDegree.put(w, colorDegreeW); // increase color degree of the current vertex
                 /*
