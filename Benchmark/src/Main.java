@@ -3,6 +3,7 @@ import org.jgrapht.Graph;
 import org.jgrapht.alg.color.ColorRefinementAlgorithm;
 import org.jgrapht.alg.interfaces.VertexColoringAlgorithm;
 import org.jgrapht.alg.isomorphism.ColorRefinementIsomorphismInspector;
+import org.jgrapht.alg.isomorphism.IndividualizationRefinementIsomorphismInspector;
 import org.jgrapht.alg.isomorphism.VF2GraphIsomorphismInspector;
 import org.jgrapht.generate.GnmRandomGraphGenerator;
 import org.jgrapht.generate.GnpRandomGraphGenerator;
@@ -18,7 +19,7 @@ public class Main {
     public static void main (String[] args) {
         // RunBenchmarkWithLinearNumberOfEdges();
         // RunRandomTestWithLinearNumberOfEdges();
-         RunBenchmarkVF2();
+         RunBenchmarkVF2IR();
         // RunBenchmarkWithEdgeProbability();
     }
 
@@ -26,6 +27,14 @@ public class Main {
         double e = 200;
         for (int i = 200; i <= 10400; i += 200) {
             VF2BenchmarkResult result = RunVF2BenchmarkWithEdgeProbability(i, 0.1);
+            System.out.println(result.getProblemSize() + "\t" + result.getColorRefinementMilliseconds() + "\t" + result.getVf2Milliseconds());
+        }
+    }
+
+    private static void RunBenchmarkVF2IR() {
+        double e = 200;
+        for (int i = 200; i <= 10400; i += 200) {
+            VF2BenchmarkResult result = RunVF2BenchmarkIR(i, 2);
             System.out.println(result.getProblemSize() + "\t" + result.getColorRefinementMilliseconds() + "\t" + result.getVf2Milliseconds());
         }
     }
@@ -90,6 +99,12 @@ public class Main {
         return RunVF2Benchmark(generator, size);
     }
 
+    private static VF2BenchmarkResult RunVF2BenchmarkIR(int size, double factor) {
+        GnmRandomGraphGenerator<Integer, DefaultEdge> generator = new GnmRandomGraphGenerator<Integer, DefaultEdge>(
+                size, (int)(factor * size), seed++);
+        return RunVF2BenchmarkIR(generator, size);
+    }
+
     private static BenchmarkResult RunBenchmarkWithLinearNumberOfEdges(int size, int multiplier) {
         GnmRandomGraphGenerator<Integer, DefaultEdge> generator = new GnmRandomGraphGenerator<Integer, DefaultEdge>(
                 size, multiplier * size, seed++);
@@ -121,6 +136,35 @@ public class Main {
         Graph<Integer, DefaultEdge> graph2 = getRandomPermutation(graph1, seed++);
 
         ColorRefinementIsomorphismInspector<Integer, DefaultEdge> colorRefinementIsomorphismInspector = new ColorRefinementIsomorphismInspector<>(graph1, graph2);
+        VF2GraphIsomorphismInspector<Integer, DefaultEdge> vf2IsomorphismInspector = new VF2GraphIsomorphismInspector<>(graph1, graph2);
+        System.gc();
+        StopWatch watch = new StopWatch();
+        watch.start();
+        boolean resultColorRefinement = colorRefinementIsomorphismInspector.isomorphismExists();
+        watch.stop();
+        long colorRefinementTime = watch.getTime();
+        System.gc();
+        watch = new StopWatch();
+        watch.start();
+        boolean resultVf2 = vf2IsomorphismInspector.isomorphismExists();
+        watch.stop();
+        long vf2Time = watch.getTime();
+
+        if (resultColorRefinement != resultVf2) {
+            // throw new RuntimeException("Tests were different, CR=" + resultColorRefinement);
+        }
+
+        return new VF2BenchmarkResult((int)colorRefinementTime, (int)vf2Time, size);
+    }
+
+    private static VF2BenchmarkResult RunVF2BenchmarkIR(GraphGenerator<Integer, DefaultEdge, Integer> generator, int size) {
+        Graph<Integer, DefaultEdge> graph1 = new SimpleGraph<>(
+                SupplierUtil.createIntegerSupplier(), SupplierUtil.DEFAULT_EDGE_SUPPLIER, false);
+
+        generator.generateGraph(graph1);
+        Graph<Integer, DefaultEdge> graph2 = getRandomPermutation(graph1, seed++);
+
+        IndividualizationRefinementIsomorphismInspector<Integer, DefaultEdge> colorRefinementIsomorphismInspector = new IndividualizationRefinementIsomorphismInspector<>(graph1, graph2);
         VF2GraphIsomorphismInspector<Integer, DefaultEdge> vf2IsomorphismInspector = new VF2GraphIsomorphismInspector<>(graph1, graph2);
         System.gc();
         StopWatch watch = new StopWatch();

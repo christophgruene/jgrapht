@@ -115,6 +115,7 @@
 					<version>2.21.0</version>
 					<configuration>
 						<testFailureIgnore>false</testFailureIgnore>
+								<trimStackTrace>false</trimStackTrace>
 					</configuration>
 				</plugin>
 				<plugin>

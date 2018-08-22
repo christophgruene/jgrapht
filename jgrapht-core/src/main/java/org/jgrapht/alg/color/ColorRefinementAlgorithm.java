@@ -48,7 +48,7 @@ public class ColorRefinementAlgorithm<V, E> implements VertexColoringAlgorithm<V
     private Coloring<V> alpha;
 
     private Integer k;
-
+    private Integer numberOfColorsInCurrentColoring;
     /**
      * Construct a new coloring algorithm.
      *
@@ -132,10 +132,10 @@ public class ColorRefinementAlgorithm<V, E> implements VertexColoringAlgorithm<V
 
             //reset attributes for new iteration such that the invariants are still correct
             Iterator<Integer> adjColorIterator = adjacentColors.iterator();
-            
+
             while(adjColorIterator.hasNext()) {
                 Integer c = adjColorIterator.next();
-                
+
                 for(V v : A.get(c)) {
                     colorDegree.put(v, 0);
                 }
@@ -164,7 +164,7 @@ public class ColorRefinementAlgorithm<V, E> implements VertexColoringAlgorithm<V
     private void calculateColorDegree(Integer r, Map<V, Integer> color, HashMap<Integer, List<V>> C, HashMap<Integer, List<V>> A, ArrayList<Integer> adjacentColors, int[] maxColorDegree, int[] minColorDegree, Map<V, Integer> colorDegree) {
         for(V v : C.get(r)) {
             Set<E> incomingEdges = graph.incomingEdgesOf(v); // get all incident edges to get all adjacent vertices
-            
+
             for(E e: incomingEdges) {
                 V w = Graphs.getOppositeVertex(graph, e, v);
                 int colorDegreeW = colorDegree.get(w) + 1;

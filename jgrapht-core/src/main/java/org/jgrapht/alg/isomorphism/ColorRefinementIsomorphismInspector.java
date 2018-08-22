@@ -1,45 +1,20 @@
-/*
- * (C) Copyright 2018-2018, by Christoph Grüne and Contributors.
- *
- * JGraphT : a free Java graph-theory library
- *
- * This program and the accompanying materials are dual-licensed under
- * either
- *
- * (a) the terms of the GNU Lesser General Public License version 2.1
- * as published by the Free Software Foundation, or (at your option) any
- * later version.
- *
- * or (per the licensee's choosing)
- *
- * (b) the terms of the Eclipse Public License v1.0 as published by
- * the Eclipse Foundation.
- */
 package org.jgrapht.alg.isomorphism;
 
-import org.jgrapht.*;
+import org.jgrapht.Graph;
+import org.jgrapht.GraphMapping;
+import org.jgrapht.GraphTests;
+import org.jgrapht.GraphType;
 import org.jgrapht.alg.color.ColorRefinementAlgorithm;
 import org.jgrapht.alg.interfaces.VertexColoringAlgorithm;
 import org.jgrapht.alg.interfaces.VertexColoringAlgorithm.Coloring;
-import org.jgrapht.graph.AsGraphUnion;
 import org.jgrapht.graph.SimpleGraph;
-import org.jgrapht.graph.SimpleWeightedGraph;
 
 import java.util.*;
 import java.util.function.Supplier;
 
 /**
- * Implementation of the color refinement algorithm isomorphism test using its feature of detecting
- * <a href="http://mathworld.wolfram.com/GraphIsomorphism.html">isomorphism between two graphs</a>
- * as described in
- * C. Berkholz, P. Bonsma, and M. Grohe.  Tight lower and upper bounds for the complexity of canonical
- * colour refinement. Theory of Computing Systems,doi:10.1007/s00224-016-9686-0, 2016 (color refinement)
- * The complexity of this algorithm is O(|V| + |E| log |V|).
- *
  * @param <V> the type of the vertices
  * @param <E> the type of the edges
- *
- * @author Christoph Grüne
  */
 public class ColorRefinementIsomorphismInspector<V, E> implements IsomorphismInspector<V, E> {
 
@@ -105,7 +80,7 @@ public class ColorRefinementIsomorphismInspector<V, E> implements IsomorphismIns
     }
 
     /**
-     * {@inheritDoc}
+     *
      *
      * @throws IsomorphismUndecidableException if the isomorphism test was not executed and the inspector cannot decide whether the graphs are isomorphic
      */
@@ -142,7 +117,7 @@ public class ColorRefinementIsomorphismInspector<V, E> implements IsomorphismIns
 
         Graph<Tuple<V, Integer>, Tuple<E, Integer>> graph = new UnionGraph<V, E>(graph1, graph2);
 
-        ColorRefinementAlgorithm<Tuple<V, Integer>, Tuple<E, Integer>> colorRefinementAlgorithm1 = new ColorRefinementAlgorithm<Tuple<V, Integer>, Tuple<E, Integer>> (graph);
+        ColorRefinementAlgorithm<Tuple<V, Integer>, Tuple<E, Integer>> colorRefinementAlgorithm1 = new ColorRefinementAlgorithm<Tuple<V, Integer>, Tuple<E, Integer>>(graph);
 
         // execute color refinement for graph1
         Coloring<Tuple<V, Integer>> coloring = colorRefinementAlgorithm1.getColoring();
