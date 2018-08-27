@@ -17,27 +17,21 @@
  */
 package org.jgrapht.graph.guava;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
-import java.util.Objects;
-import java.util.function.ToDoubleFunction;
-
-import org.jgrapht.Graph;
-import org.jgrapht.GraphType;
-import org.jgrapht.util.TypeUtil;
-
-import com.google.common.graph.EndpointPair;
+import com.google.common.graph.*;
 import com.google.common.graph.Graphs;
-import com.google.common.graph.MutableValueGraph;
-import com.google.common.graph.ValueGraph;
-import com.google.common.graph.ValueGraphBuilder;
+import org.jgrapht.Graph;
+import org.jgrapht.*;
+import org.jgrapht.util.*;
+
+import java.io.*;
+import java.util.*;
+import java.util.function.*;
 
 /**
  * A graph adapter class using Guava's {@link MutableValueGraph}.
  * 
- * <p>The adapter uses class {@link EndpointPair} to represent edges. Changes in the adapter such as 
+ * <p>
+ * The adapter uses class {@link EndpointPair} to represent edges. Changes in the adapter such as
  * adding or removing vertices and edges are reflected in the underlying value graph.
  *
  * <p>
@@ -46,7 +40,8 @@ import com.google.common.graph.ValueGraphBuilder;
  * 
  * <pre>
  * class MyValue
- *     implements Serializable
+ *     implements
+ *     Serializable
  * {
  *     private double value;
  *
@@ -94,8 +89,12 @@ import com.google.common.graph.ValueGraphBuilder;
  * @param <W> the value type
  */
 public class MutableValueGraphAdapter<V, W>
-    extends BaseValueGraphAdapter<V, W, MutableValueGraph<V, W>>
-    implements Graph<V, EndpointPair<V>>, Cloneable, Serializable
+    extends
+    BaseValueGraphAdapter<V, W, MutableValueGraph<V, W>>
+    implements
+    Graph<V, EndpointPair<V>>,
+    Cloneable,
+    Serializable
 {
     private static final long serialVersionUID = -5095044027783397573L;
 
@@ -111,7 +110,23 @@ public class MutableValueGraphAdapter<V, W>
     public MutableValueGraphAdapter(
         MutableValueGraph<V, W> valueGraph, W defaultValue, ToDoubleFunction<W> valueConverter)
     {
-        super(valueGraph, valueConverter);
+        this(valueGraph, defaultValue, valueConverter, null, null);
+    }
+
+    /**
+     * Create a new adapter.
+     * 
+     * @param valueGraph the value graph
+     * @param defaultValue a default value to be used when creating new edges
+     * @param valueConverter a function that converts a value to a double
+     * @param vertexSupplier the vertex supplier
+     * @param edgeSupplier the edge supplier
+     */
+    public MutableValueGraphAdapter(
+        MutableValueGraph<V, W> valueGraph, W defaultValue, ToDoubleFunction<W> valueConverter,
+        Supplier<V> vertexSupplier, Supplier<EndpointPair<V>> edgeSupplier)
+    {
+        super(valueGraph, valueConverter, vertexSupplier, edgeSupplier);
         this.defaultValue = Objects.requireNonNull(defaultValue);
     }
 
@@ -171,6 +186,21 @@ public class MutableValueGraphAdapter<V, W>
 
         valueGraph.putEdgeValue(sourceVertex, targetVertex, defaultValue);
         return true;
+    }
+
+    @Override
+    public V addVertex()
+    {
+        if (vertexSupplier == null) {
+            throw new UnsupportedOperationException("The graph contains no vertex supplier");
+        }
+
+        V v = vertexSupplier.get();
+
+        if (valueGraph.addNode(v)) {
+            return v;
+        }
+        return null;
     }
 
     @Override
@@ -281,7 +311,8 @@ public class MutableValueGraphAdapter<V, W>
 
     @SuppressWarnings("unchecked")
     private void readObject(ObjectInputStream ois)
-        throws ClassNotFoundException, IOException
+        throws ClassNotFoundException,
+        IOException
     {
         ois.defaultReadObject();
 

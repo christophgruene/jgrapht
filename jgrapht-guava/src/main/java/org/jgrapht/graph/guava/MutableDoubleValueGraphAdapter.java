@@ -17,13 +17,11 @@
  */
 package org.jgrapht.graph.guava;
 
-import java.io.Serializable;
-import java.util.function.ToDoubleFunction;
-
+import com.google.common.graph.*;
 import org.jgrapht.Graph;
 
-import com.google.common.graph.EndpointPair;
-import com.google.common.graph.MutableValueGraph;
+import java.io.*;
+import java.util.function.*;
 
 /**
  * A graph adapter class using Guava's {@link MutableValueGraph} specialized with double values.
@@ -65,7 +63,8 @@ import com.google.common.graph.MutableValueGraph;
  * @param <V> the graph vertex type
  */
 public class MutableDoubleValueGraphAdapter<V>
-    extends MutableValueGraphAdapter<V, Double>
+    extends
+    MutableValueGraphAdapter<V, Double>
 {
     private static final long serialVersionUID = -6335845255406679994L;
 
@@ -76,9 +75,23 @@ public class MutableDoubleValueGraphAdapter<V>
      */
     public MutableDoubleValueGraphAdapter(MutableValueGraph<V, Double> valueGraph)
     {
+        this(valueGraph, null, null);
+    }
+
+    /**
+     * Create a new adapter.
+     * 
+     * @param valueGraph the value graph
+     * @param vertexSupplier the vertex supplier
+     * @param edgeSupplier the edge supplier
+     */
+    public MutableDoubleValueGraphAdapter(
+        MutableValueGraph<V, Double> valueGraph, Supplier<V> vertexSupplier,
+        Supplier<EndpointPair<V>> edgeSupplier)
+    {
         super(
-            valueGraph, Graph.DEFAULT_EDGE_WEIGHT,
-            (ToDoubleFunction<Double> & Serializable) x -> x);
+            valueGraph, Graph.DEFAULT_EDGE_WEIGHT, (ToDoubleFunction<Double> & Serializable) x -> x,
+            vertexSupplier, edgeSupplier);
     }
 
     @Override
